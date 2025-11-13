@@ -53,12 +53,17 @@ def save_config(cfg: dict):
         set_key(env_file, "GOOGLE_MODEL", cfg["google"].get("model", ""))
         set_key(env_file, "GOOGLE_PROXY_URL", cfg["google"].get("proxy_url", ""))
 
-# --- 工作流与UI章节映射 ---
-UI_SECTION_ORDER = ["title", "background", "invention", "drawings", "implementation"]
+
+UI_SECTION_ORDER = ["title", "technical_field", "background", "invention", "figure_description", "implementation", "claims", "abstract", "drawings"]
 UI_SECTION_CONFIG = {
     "title": {
         "label": "发明名称",
         "workflow_keys": ["title_options"],
+        "dependencies": ["structured_brief"],
+    },
+    "technical_field": {
+        "label": "技术领域",
+        "workflow_keys": ["tech_field"],
         "dependencies": ["structured_brief"],
     },
     "background": {
@@ -71,9 +76,9 @@ UI_SECTION_CONFIG = {
         "workflow_keys": ["invention_purpose", "solution_points", "invention_solution_detail", "invention_effects"],
         "dependencies": ["background", "structured_brief"],
     },
-    "drawings": {
-        "label": "附图",
-        "workflow_keys": [],
+    "figure_description": {
+        "label": "附图说明",
+        "workflow_keys": ["mermaid_ideas", "figure_description"],
         "dependencies": ["invention"],
     },
     "implementation": {
@@ -81,15 +86,127 @@ UI_SECTION_CONFIG = {
         "workflow_keys": ["implementation_details"],
         "dependencies": ["invention", "structured_brief"],
     },
+    "claims": {
+        "label": "权利要求书",
+        "workflow_keys": ["claims_text"],
+        "dependencies": ["invention", "structured_brief"],
+    },
+    "abstract": {
+        "label": "摘要",
+        "workflow_keys": ["abstract_text"],
+        "dependencies": ["invention", "structured_brief"],
+    },
+    "drawings": {
+        "label": "附图",
+        "workflow_keys": [],
+        "dependencies": ["invention"],
+    },
 }
 
 WORKFLOW_CONFIG = {
-    "title_options": {"prompt": prompts.PROMPT_TITLE, "json_mode": True, "dependencies": ["core_inventive_concept", "technical_solution_summary"]},
-    "background_problem": {"prompt": prompts.PROMPT_BACKGROUND_PROBLEM, "json_mode": False, "dependencies": ["problem_statement"]},
-    "background_context": {"prompt": prompts.PROMPT_BACKGROUND_CONTEXT, "json_mode": False, "dependencies": ["background_problem"]},
-    "invention_purpose": {"prompt": prompts.PROMPT_INVENTION_PURPOSE, "json_mode": False, "dependencies": ["background_problem"]},
-    "solution_points": {"prompt": prompts.PROMPT_INVENTION_SOLUTION_POINTS, "json_mode": True, "dependencies": ["technical_solution_summary", "key_components_or_steps"]},
-    "invention_solution_detail": {"prompt": prompts.PROMPT_INVENTION_SOLUTION_DETAIL, "json_mode": False, "dependencies": ["core_inventive_concept", "technical_solution_summary", "key_components_or_steps"]},
-    "invention_effects": {"prompt": prompts.PROMPT_INVENTION_EFFECTS, "json_mode": False, "dependencies": ["solution_points", "achieved_effects"]},
-    "implementation_details": {"prompt": prompts.PROMPT_IMPLEMENTATION_POINT, "json_mode": False, "dependencies": ["solution_points"]},
+    # 发明名称
+    "title_options": {
+        "prompt": prompts.PROMPT_TITLE,
+        "json_mode": True,
+        "dependencies": ["core_inventive_concept", "technical_solution_summary"],
+    },
+
+    # 技术领域
+    "tech_field": {
+        "prompt": prompts.PROMPT_TECH_FIELD,
+        "json_mode": False,
+        "dependencies": ["core_inventive_concept", "technical_solution_summary"],
+    },
+
+    # 背景技术
+    "background_problem": {
+        "prompt": prompts.PROMPT_BACKGROUND_PROBLEM,
+        "json_mode": False,
+        "dependencies": ["problem_statement"],
+    },
+    "background_context": {
+        "prompt": prompts.PROMPT_BACKGROUND_CONTEXT,
+        "json_mode": False,
+        "dependencies": ["background_technology", "background_problem"],
+    },
+
+    # 发明内容
+    "invention_purpose": {
+        "prompt": prompts.PROMPT_INVENTION_PURPOSE,
+        "json_mode": False,
+        "dependencies": ["background_problem"],
+    },
+    "solution_points": {
+        "prompt": prompts.PROMPT_INVENTION_SOLUTION_POINTS,
+        "json_mode": True,
+        "dependencies": ["technical_solution_summary", "key_components_or_steps"],
+    },
+    "invention_solution_detail": {
+        "prompt": prompts.PROMPT_INVENTION_SOLUTION_DETAIL,
+        "json_mode": False,
+        "dependencies": ["core_inventive_concept", "technical_solution_summary", "key_components_or_steps"],
+    },
+    "invention_effects": {
+        "prompt": prompts.PROMPT_INVENTION_EFFECTS,
+        "json_mode": False,
+        "dependencies": ["solution_points", "achieved_effects"],
+    },
+
+    # 附图说明（先生成构思，再生成说明）
+    "mermaid_ideas": {
+        "prompt": prompts.PROMPT_MERMAID_IDEAS,
+        "json_mode": True,
+        "dependencies": ["invention_solution_detail"],
+    },
+    "figure_description": {
+        "prompt": prompts.PROMPT_FIGURE_DESCRIPTION,
+        "json_mode": False,
+        "dependencies": ["mermaid_ideas"],
+    },
+    # 附图标号表与Mermaid代码供附图UI使用（不作为章节）
+    "figure_labels": {
+        "prompt": prompts.PROMPT_FIGURE_LABELS,
+        "json_mode": True,
+        "dependencies": ["key_components_or_steps"],
+    },
+    "mermaid_code": {
+        "prompt": prompts.PROMPT_MERMAID_CODE,
+        "json_mode": False,
+        "dependencies": ["mermaid_ideas", "invention_solution_detail"],
+    },
+
+    # 具体实施方式
+    "implementation_details": {
+        "prompt": prompts.PROMPT_IMPLEMENTATION_POINT,
+        "json_mode": False,
+        "dependencies": ["solution_points"],
+    },
+
+    # 权利要求书
+    "claims_text": {
+        "prompt": prompts.PROMPT_CLAIMS,
+        "json_mode": False,
+        "dependencies": ["core_inventive_concept", "technical_solution_summary", "key_components_or_steps", "solution_points"],
+    },
+    # 可选的校验工作流（不作为章节直接展示）
+    "claims_check": {
+        "prompt": prompts.PROMPT_CLAIMS_CHECK,
+        "json_mode": True,
+        "dependencies": ["claims_text", "key_components_or_steps"],
+    },
+
+    # 摘要
+    "abstract_text": {
+        "prompt": prompts.PROMPT_ABSTRACT,
+        "json_mode": False,
+        "dependencies": ["problem_statement", "solution_points", "achieved_effects"],
+    },
+
+    # 全局重构与润色（用于预览阶段的总编，不直接归属某章节生成）
+    "global_refine": {
+        "prompt": prompts.PROMPT_GLOBAL_RESTRUCTURE_AND_POLISH,
+        "json_mode": False,
+        "dependencies": [],
+    },
 }
+ 

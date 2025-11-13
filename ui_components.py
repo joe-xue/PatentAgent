@@ -19,7 +19,7 @@ def render_sidebar(config: dict):
         config["provider"] = provider_map[selected_provider_display]
 
         p_cfg = config[config["provider"]]
-        # p_cfg["api_key"] = st.text_input("API Key", value=p_cfg.get("api_key", ""), type="password", key=f'{config["provider"]}_api_key')
+        p_cfg["api_key"] = st.text_input("API Key", value=p_cfg.get("api_key", ""), type="password", key=f'{config["provider"]}_api_key')
 
         if config["provider"] == "azure":
             p_cfg["api_base"] = st.text_input("API 基础地址", value=p_cfg.get("api_base", ""), key="openai_api_base")
