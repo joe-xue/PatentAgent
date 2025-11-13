@@ -3,6 +3,13 @@ import httpx
 import os
 from typing import List, Dict
 from google import genai
+import os
+from langchain.chat_models import init_chat_model
+
+# model = init_chat_model(
+#     "azure_openai:gpt-5",
+#     azure_deployment=os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"],
+# )
 
 class LLMClient:
     """一个统一的、简化的LLM客户端，支持OpenAI兼容接口和Google Gemini，并统一处理代理。"""
@@ -25,6 +32,20 @@ class LLMClient:
                 if "HTTPS_PROXY" in os.environ:
                     del os.environ["HTTPS_PROXY"]
             self.client = genai.Client(api_key=api_key)
+        if self.provider == "azure":
+            if proxy_url:
+                os.environ["HTTP_PROXY"] = proxy_url
+                os.environ["HTTPS_PROXY"] = proxy_url
+            else:
+                if "HTTP_PROXY" in os.environ:
+                    del os.environ["HTTP_PROXY"]
+                if "HTTPS_PROXY" in os.environ:
+                    del os.environ["HTTPS_PROXY"]
+            self.client = init_chat_model(
+                "azure_openai:gpt-5",
+                azure_deployment=os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"],
+                temperature=0.1,
+            )
         else:  # openai 兼容
             http_client = httpx.Client(proxy=proxy_url or None)
             self.client = openai.OpenAI(
@@ -35,7 +56,11 @@ class LLMClient:
 
     def call(self, messages: List[Dict], json_mode: bool = False) -> str:
         """根据提供商调用相应的LLM API"""
-        if self.provider == "google":
+        if self.provider == "azure":
+            extra_params = {"response_format": {"type": "json_object"}} if json_mode else {}
+            response = self.client.invoke(messages, **extra_params)
+            return response.content
+        elif self.provider == "google":
             generation_config_params = {}
             generation_config_params["temperature"] = 0.1
             generation_config_params["top_p"] = 0.1

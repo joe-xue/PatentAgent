@@ -14,6 +14,13 @@ def load_config() -> dict:
     """加载配置，支持 openai兼容格式 / google 分节嵌套结构。"""
     return {
         "provider": os.getenv("PROVIDER", "openai"),
+        "azure": {
+            "api_base": os.getenv("AZURE_OPENAI_ENDPOINT", "https://api.mistral.ai/v1"),
+            "api_key": os.getenv("AZURE_OPENAI_API_KEY", ""),
+            "model": os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-5"),
+            "api_version": os.getenv("OPENAI_API_VERSION", "2025-01-01-preview"),
+            "proxy_url": os.getenv("OPENAI_PROXY_URL", ""),
+        },
         "openai": {
             "api_base": os.getenv("OPENAI_API_BASE", "https://api.mistral.ai/v1"),
             "api_key": os.getenv("OPENAI_API_KEY", ""),
@@ -30,6 +37,12 @@ def load_config() -> dict:
 def save_config(cfg: dict):
     """将配置保存到 .env 文件。"""
     set_key(env_file, "PROVIDER", cfg.get("provider", "openai"))
+    if "azure" in cfg:
+        set_key(env_file, "AZURE_OPENAI_API_KEY", cfg["azure"].get("api_key", ""))
+        set_key(env_file, "AZURE_OPENAI_ENDPOINT", cfg["azure"].get("api_base", ""))
+        set_key(env_file, "AZURE_OPENAI_DEPLOYMENT_NAME", cfg["azure"].get("model", ""))
+        set_key(env_file, "OPENAI_API_VERSION", cfg["azure"].get("api_version", ""))
+        set_key(env_file, "OPENAI_PROXY_URL", cfg["azure"].get("proxy_url", ""))
     if "openai" in cfg:
         set_key(env_file, "OPENAI_API_KEY", cfg["openai"].get("api_key", ""))
         set_key(env_file, "OPENAI_API_BASE", cfg["openai"].get("api_base", ""))

@@ -7,7 +7,7 @@ def render_sidebar(config: dict):
     """渲染侧边栏并返回更新后的配置字典。"""
     with st.sidebar:
         st.header("⚙️ API 配置")
-        provider_map = {"OpenAI兼容": "openai", "Google": "google"}
+        provider_map = {"Azure": "azure", "OpenAI兼容": "openai", "Google": "google"}
         provider_keys = list(provider_map.keys())
         current_provider_key = next((key for key, value in provider_map.items() if value == config.get("provider")), "OpenAI兼容")
         
@@ -19,22 +19,30 @@ def render_sidebar(config: dict):
         config["provider"] = provider_map[selected_provider_display]
 
         p_cfg = config[config["provider"]]
-        p_cfg["api_key"] = st.text_input("API Key", value=p_cfg.get("api_key", ""), type="password", key=f'{config["provider"]}_api_key')
+        # p_cfg["api_key"] = st.text_input("API Key", value=p_cfg.get("api_key", ""), type="password", key=f'{config["provider"]}_api_key')
 
-        if config["provider"] == "openai":
+        if config["provider"] == "azure":
+            p_cfg["api_base"] = st.text_input("API 基础地址", value=p_cfg.get("api_base", ""), key="openai_api_base")
+            p_cfg["model"] = st.text_input("模型名称", value=p_cfg.get("model", ""), key="openai_model_name")
+            p_cfg["api_version"] = st.text_input("模型版本", value=p_cfg.get("api_version", ""), key="openai_model_version")
+            p_cfg["proxy_url"] = st.text_input(
+                "代理 URL (可选)", value=p_cfg.get("proxy_url", ""),
+                placeholder="http://127.0.0.1:7890", key="google_proxy_url"
+            )
+        elif config["provider"] == "google":
+            p_cfg["model"] = st.text_input("模型名称", value=p_cfg.get("model", ""), key="google_model")
+            p_cfg["proxy_url"] = st.text_input(
+                "代理 URL (可选)", value=p_cfg.get("proxy_url", ""),
+                placeholder="http://127.0.0.1:7890", key="google_proxy_url"
+            )
+        else:
             p_cfg["api_base"] = st.text_input("API 基础地址", value=p_cfg.get("api_base", ""), key="openai_api_base")
             p_cfg["model"] = st.text_input("模型名称", value=p_cfg.get("model", ""), key="openai_model_name")
             p_cfg["proxy_url"] = st.text_input(
                 "代理 URL (可选)", value=p_cfg.get("proxy_url", ""),
                 placeholder="http://127.0.0.1:7890", key="openai_proxy_url"
             )
-        else: # google
-            p_cfg["model"] = st.text_input("模型名称", value=p_cfg.get("model", ""), key="google_model")
-            p_cfg["proxy_url"] = st.text_input(
-                "代理 URL (可选)", value=p_cfg.get("proxy_url", ""),
-                placeholder="http://127.0.0.1:7890", key="google_proxy_url"
-            )
-
+        
         if st.button("保存配置"):
             save_config(config)
             st.success("配置已保存！")

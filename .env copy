@@ -1,0 +1,14 @@
+
+PROVIDER = "azure" # azure or openai
+
+# gpt-5
+AZURE_OPENAI_DEPLOYMENT_NAME = "gpt-5"
+AZURE_OPENAI_API_KEY = ""
+AZURE_OPENAI_ENDPOINT = ""
+OPENAI_API_VERSION = ""
+
+# openai 兼容
+OPENAI_API_KEY = ""
+OPENAI_API_BASE = "" ""
+OPENAI_MODEL_NAME = "gpt-4"
+OPENAI_PROXY_URL = ""

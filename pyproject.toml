@@ -8,11 +8,16 @@ dependencies = [
     "bcrypt>=5.0.0",
     "google-genai>=1.19.0",
     "httpx[socks]>=0.28.1",
+    "langchain[openai]>=1.0.5",
     "openai>=1.0.0",
     "python-dotenv>=1.1.0",
     "streamlit>=1.33.0",
     "toml>=0.10.2",
 ]
+
+[[tool.uv.index]]
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true
 
 # 以下为专门给 Poetry (Streamlit Cloud 使用) 看的 部分,本地部署时需注释掉
 # [tool.poetry]
